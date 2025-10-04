@@ -5,28 +5,54 @@
 {% block content %}
 <div class="hero-section">
     <div class="container text-center">
-        <h1 class="display-4 mb-4">
-            <i class="fas fa-magic me-3"></i>AI Video Generator
-        </h1>
+        <h1 class="display-4 mb-3">AI Video Generator</h1>
         <p class="lead">Create stunning short videos with AI-generated scripts, images, and audio</p>
     </div>
 </div>
 
 <div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-10">
+            <!-- Style Upload Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Style Images (Optional)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="upload-area" id="uploadArea">
+                        <div id="uploadContent">
+                            <i class="fas fa-cloud-upload-alt fa-2x mb-3 text-muted"></i>
+                            <h6>Drag & Drop Style Images Here</h6>
+                            <p class="text-muted mb-3">or click to browse files</p>
+                            <input type="file" id="styleFile" accept="image/*" style="display: none;" multiple>
+                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('styleFile').click()">
+                                Choose Files
+                            </button>
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    Supported: PNG, JPG, JPEG, GIF, BMP, TIFF, WEBP (Max 16MB)
+                                </small>
+                            </div>
+                        </div>
+                        <div id="uploadPreview" style="display: none;">
+                            <div class="row" id="previewImages"></div>
+                            <button type="button" class="btn btn-outline-danger mt-3" onclick="clearUploads()">
+                                Remove All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Generation Form -->
             <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-play-circle me-2"></i>Generate New Video
-                    </h4>
+                <div class="card-header">
+                    <h5 class="mb-0">Generate New Video</h5>
                 </div>
                 <div class="card-body">
                     <form id="videoForm">
                         <div class="mb-4">
-                            <label for="story_prompt" class="form-label">
-                                <i class="fas fa-lightbulb me-2"></i>Story Prompt
-                            </label>
+                            <label for="story_prompt" class="form-label">Story Prompt</label>
                             <textarea 
                                 class="form-control" 
                                 id="story_prompt" 
@@ -42,7 +68,7 @@
                         
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
-                                <i class="fas fa-rocket me-2"></i>Generate Video
+                                Generate Video
                             </button>
                         </div>
                     </form>
@@ -108,28 +134,34 @@
 
     <!-- Features Section -->
     <div class="row mt-5">
-        <div class="col-md-4">
-            <div class="card text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card text-center h-100">
                 <div class="card-body">
-                    <i class="fas fa-pen-fancy fa-3x text-primary mb-3"></i>
+                    <div class="feature-icon">
+                        <i class="fas fa-pen-fancy"></i>
+                    </div>
                     <h5>AI Script Generation</h5>
                     <p class="text-muted">Generate compelling video scripts with detailed scene descriptions</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card text-center h-100">
                 <div class="card-body">
-                    <i class="fas fa-image fa-3x text-success mb-3"></i>
+                    <div class="feature-icon">
+                        <i class="fas fa-image"></i>
+                    </div>
                     <h5>Character-Consistent Images</h5>
                     <p class="text-muted">Create images that maintain character consistency throughout your video</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card text-center h-100">
                 <div class="card-body">
-                    <i class="fas fa-volume-up fa-3x text-warning mb-3"></i>
+                    <div class="feature-icon">
+                        <i class="fas fa-volume-up"></i>
+                    </div>
                     <h5>High-Quality Audio</h5>
                     <p class="text-muted">Generate natural-sounding voiceovers for your video content</p>
                 </div>
@@ -142,19 +174,119 @@
 {% block scripts %}
 <script>
 let statusInterval;
+let uploadedFiles = [];
 
 $(document).ready(function() {
     $('#videoForm').on('submit', function(e) {
         e.preventDefault();
         startGeneration();
     });
+
+    // File upload handling
+    setupFileUpload();
 });
+
+function setupFileUpload() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('styleFile');
+
+    // Drag and drop events
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        handleFiles(e.target.files);
+    });
+
+    // Click to upload
+    uploadArea.addEventListener('click', function(e) {
+        if (e.target === uploadArea || e.target.closest('#uploadContent')) {
+            fileInput.click();
+        }
+    });
+}
+
+function handleFiles(files) {
+    for (let file of files) {
+        if (file.type.startsWith('image/')) {
+            uploadFile(file);
+        }
+    }
+}
+
+function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    $.ajax({
+        url: '/upload_style',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            uploadedFiles.push(response);
+            updateUploadPreview();
+            showNotification('Style image uploaded successfully!', 'success');
+        },
+        error: function(xhr) {
+            const error = xhr.responseJSON?.error || 'Upload failed';
+            showNotification(error, 'error');
+        }
+    });
+}
+
+function updateUploadPreview() {
+    if (uploadedFiles.length > 0) {
+        document.getElementById('uploadContent').style.display = 'none';
+        document.getElementById('uploadPreview').style.display = 'block';
+        
+        const previewContainer = document.getElementById('previewImages');
+        previewContainer.innerHTML = '';
+        
+        uploadedFiles.forEach((file, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-md-3 mb-3';
+            col.innerHTML = `
+                <div class="card">
+                    <img src="${file.preview_url}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                    <div class="card-body p-2">
+                        <small class="text-muted">${file.filename}</small>
+                    </div>
+                </div>
+            `;
+            previewContainer.appendChild(col);
+        });
+    }
+}
+
+function clearUploads() {
+    uploadedFiles = [];
+    document.getElementById('uploadContent').style.display = 'block';
+    document.getElementById('uploadPreview').style.display = 'none';
+    document.getElementById('styleFile').value = '';
+}
 
 function startGeneration() {
     const storyPrompt = $('#story_prompt').val().trim();
     
     if (!storyPrompt) {
-        alert('Please enter a story prompt');
+        showNotification('Please enter a story prompt', 'error');
         return;
     }
     
@@ -163,6 +295,7 @@ function startGeneration() {
     $('#resultCard').hide();
     $('#errorCard').hide();
     $('#generateBtn').prop('disabled', true);
+    $('#generateBtn').html('<span class="loading-spinner me-2"></span>Generating...');
     
     // Start generation
     $.ajax({
@@ -191,6 +324,7 @@ function startStatusPolling() {
             if (!data.is_running) {
                 clearInterval(statusInterval);
                 $('#generateBtn').prop('disabled', false);
+                $('#generateBtn').html('<i class="fas fa-rocket me-2"></i>Generate Video');
                 
                 if (data.error) {
                     showError(data.error);
@@ -218,12 +352,14 @@ function showSuccess(videoFolder) {
     $('#statusCard').hide();
     $('#resultCard').show();
     $('#downloadBtn').attr('href', '/download/' + videoFolder + '/final_video.mp4');
+    showNotification('Video generated successfully!', 'success');
 }
 
 function showError(error) {
     $('#statusCard').hide();
     $('#errorCard').show();
     $('#errorMessage').text(error);
+    showNotification('Generation failed: ' + error, 'error');
 }
 
 function resetForm() {
@@ -231,7 +367,27 @@ function resetForm() {
     $('#resultCard').hide();
     $('#errorCard').hide();
     $('#generateBtn').prop('disabled', false);
+    $('#generateBtn').html('<i class="fas fa-rocket me-2"></i>Generate Video');
     $('#story_prompt').val('');
+}
+
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    
+    const notification = $(`
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="fas ${icon} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `);
+    
+    $('body').append(notification);
+    
+    setTimeout(() => {
+        notification.alert('close');
+    }, 5000);
 }
 </script>
 {% endblock %}

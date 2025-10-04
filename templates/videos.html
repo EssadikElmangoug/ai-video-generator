@@ -5,10 +5,8 @@
 {% block content %}
 <div class="hero-section">
     <div class="container text-center">
-        <h1 class="display-4 mb-4">
-            <i class="fas fa-folder-open me-3"></i>Generated Videos
-        </h1>
-        <p class="lead">Browse and download your AI-generated videos</p>
+        <h1 class="display-4 mb-3">Generated Videos</h1>
+        <p class="lead">Browse, watch, and download your AI-generated videos</p>
     </div>
 </div>
 
@@ -16,30 +14,44 @@
     {% if videos %}
         <div class="row">
             {% for video in videos %}
-            <div class="col-md-6 col-lg-4 mb-4">
+            <div class="col-lg-6 mb-4">
                 <div class="card h-100">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">
-                            <i class="fas fa-video me-2"></i>Video {{ video.folder }}
-                        </h6>
-                        <span class="badge bg-light text-dark">{{ "%.1f"|format(video.size / 1024 / 1024) }} MB</span>
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Video {{ video.folder }}</h5>
+                            <span class="badge">{{ "%.1f"|format(video.size / 1024 / 1024) }} MB</span>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="text-center mb-3">
-                            <i class="fas fa-play-circle fa-3x text-primary"></i>
+                        <!-- Video Player -->
+                        <div class="video-player mb-3">
+                            <video 
+                                controls 
+                                class="w-100" 
+                                preload="metadata">
+                                <source src="/video/{{ video.path }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
                         </div>
-                        <p class="text-muted small mb-2">
-                            <i class="fas fa-calendar me-1"></i>Created: {{ video.created }}
-                        </p>
-                        <p class="text-muted small mb-3">
-                            <i class="fas fa-hdd me-1"></i>Size: {{ "%.1f"|format(video.size / 1024 / 1024) }} MB
-                        </p>
+                        
+                        <!-- Video Info -->
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <small class="text-muted">{{ video.created }}</small>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">{{ "%.1f"|format(video.size / 1024 / 1024) }} MB</small>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-footer bg-transparent">
-                        <div class="d-grid">
-                            <a href="/download/{{ video.path }}" class="btn btn-primary">
-                                <i class="fas fa-download me-2"></i>Download Video
+                        <div class="d-grid gap-2">
+                            <a href="/download/{{ video.path }}" class="btn btn-success">
+                                Download Video
                             </a>
+                            <button class="btn btn-outline-primary" onclick="shareVideo('{{ video.path }}')">
+                                Share
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -48,11 +60,13 @@
         </div>
     {% else %}
         <div class="text-center py-5">
-            <i class="fas fa-video fa-4x text-muted mb-4"></i>
-            <h3 class="text-muted">No Videos Generated Yet</h3>
-            <p class="text-muted">Start by generating your first AI video!</p>
+            <div class="feature-icon mx-auto mb-4">
+                <i class="fas fa-video"></i>
+            </div>
+            <h3 class="text-muted mb-3">No Videos Generated Yet</h3>
+            <p class="text-muted mb-4">Start by generating your first AI video!</p>
             <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
-                <i class="fas fa-plus me-2"></i>Generate Video
+                Generate Video
             </a>
         </div>
     {% endif %}
@@ -63,25 +77,23 @@
     <div class="row">
         <div class="col-lg-8 mx-auto">
             <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle me-2"></i>How It Works
-                    </h5>
+                <div class="card-header">
+                    <h5 class="mb-0">How It Works</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-1 me-2 text-primary"></i>Script Generation</h6>
+                        <div class="col-md-6 mb-3">
+                            <h6>Script Generation</h6>
                             <p class="small text-muted">AI creates a compelling script with detailed scene descriptions</p>
                             
-                            <h6><i class="fas fa-2 me-2 text-success"></i>Image Creation</h6>
+                            <h6>Image Creation</h6>
                             <p class="small text-muted">Generate character-consistent images for each scene</p>
                         </div>
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-3 me-2 text-warning"></i>Audio Generation</h6>
+                        <div class="col-md-6 mb-3">
+                            <h6>Audio Generation</h6>
                             <p class="small text-muted">Create natural-sounding voiceovers for your script</p>
                             
-                            <h6><i class="fas fa-4 me-2 text-danger"></i>Video Assembly</h6>
+                            <h6>Video Assembly</h6>
                             <p class="small text-muted">Combine everything into a final MP4 video</p>
                         </div>
                     </div>
@@ -90,4 +102,43 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function shareVideo(videoPath) {
+    if (navigator.share) {
+        navigator.share({
+            title: 'AI Generated Video',
+            text: 'Check out this AI-generated video!',
+            url: window.location.origin + '/video/' + videoPath
+        });
+    } else {
+        // Fallback: copy to clipboard
+        const url = window.location.origin + '/video/' + videoPath;
+        navigator.clipboard.writeText(url).then(() => {
+            showNotification('Video link copied to clipboard!', 'success');
+        });
+    }
+}
+
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    
+    const notification = $(`
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="fas ${icon} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `);
+    
+    $('body').append(notification);
+    
+    setTimeout(() => {
+        notification.alert('close');
+    }, 5000);
+}
+</script>
 {% endblock %}

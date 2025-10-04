@@ -14,11 +14,11 @@
     {% if videos %}
         <div class="row">
             {% for video in videos %}
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 video-card">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Video {{ video.folder }}</h5>
+                            <h6 class="mb-0">Video {{ video.folder }}</h6>
                             <span class="badge">{{ "%.1f"|format(video.size / 1024 / 1024) }} MB</span>
                         </div>
                     </div>
@@ -46,10 +46,10 @@
                     </div>
                     <div class="card-footer bg-transparent">
                         <div class="d-grid gap-2">
-                            <a href="/download/{{ video.path }}" class="btn btn-success">
+                            <a href="/download/{{ video.path }}" class="btn btn-success btn-sm">
                                 Download Video
                             </a>
-                            <button class="btn btn-outline-primary" onclick="shareVideo('{{ video.path }}')">
+                            <button class="btn btn-outline-primary btn-sm" onclick="shareVideo('{{ video.path }}')">
                                 Share
                             </button>
                         </div>

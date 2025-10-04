@@ -3,3 +3,6 @@ venv/
 venv
 videos/
 styles/
+__pycache__/
+__pycache__
+

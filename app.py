@@ -56,12 +56,17 @@ def generate_video():
     
     # Get form data
     story_prompt = request.form.get('story_prompt', '').strip()
+    aspect_ratio = request.form.get('aspect_ratio', '16:9')
     
     if not story_prompt:
         return jsonify({'error': 'Story prompt is required'}), 400
     
+    # Validate aspect ratio
+    if aspect_ratio not in ['16:9', '9:16']:
+        aspect_ratio = '16:9'  # Default fallback
+    
     # Start generation in background thread
-    thread = threading.Thread(target=run_video_generation, args=(story_prompt,))
+    thread = threading.Thread(target=run_video_generation, args=(story_prompt, aspect_ratio))
     thread.daemon = True
     thread.start()
     
@@ -192,7 +197,7 @@ def list_videos():
     
     return render_template('videos.html', videos=videos)
 
-def run_video_generation(story_prompt):
+def run_video_generation(story_prompt, aspect_ratio='16:9'):
     """Run the complete video generation process"""
     global generation_status, uploaded_style_images
     
@@ -253,7 +258,7 @@ def run_video_generation(story_prompt):
         # Step 5: Generate images
         generation_status['current_step'] = 'Generating images...'
         generation_status['progress'] = 60
-        generated_images = generate_all_images_with_character_consistency(detailed_prompts, temp_style_images, video_folder)
+        generated_images = generate_all_images_with_character_consistency(detailed_prompts, temp_style_images, video_folder, aspect_ratio)
         
         if not generated_images:
             raise Exception("Failed to generate images")

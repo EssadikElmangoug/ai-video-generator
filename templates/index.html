@@ -65,6 +65,40 @@
                                 Be creative! The AI will generate a complete script, images, and audio based on your prompt.
                             </div>
                         </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Video Aspect Ratio</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="aspect_ratio" id="aspect_16_9" value="16:9" checked>
+                                        <label class="form-check-label" for="aspect_16_9">
+                                            <div class="d-flex align-items-center">
+                                                <div class="aspect-preview me-3" style="width: 60px; height: 34px; background: var(--primary-color); border-radius: 4px;"></div>
+                                                <div>
+                                                    <strong>16:9</strong><br>
+                                                    <small class="text-muted">Landscape (YouTube, TV)</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="aspect_ratio" id="aspect_9_16" value="9:16">
+                                        <label class="form-check-label" for="aspect_9_16">
+                                            <div class="d-flex align-items-center">
+                                                <div class="aspect-preview me-3" style="width: 34px; height: 60px; background: var(--primary-color); border-radius: 4px;"></div>
+                                                <div>
+                                                    <strong>9:16</strong><br>
+                                                    <small class="text-muted">Portrait (Shorts, Reels, TikTok)</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
@@ -284,6 +318,7 @@ function clearUploads() {
 
 function startGeneration() {
     const storyPrompt = $('#story_prompt').val().trim();
+    const aspectRatio = $('input[name="aspect_ratio"]:checked').val();
     
     if (!storyPrompt) {
         showNotification('Please enter a story prompt', 'error');
@@ -302,7 +337,8 @@ function startGeneration() {
         url: '/generate',
         method: 'POST',
         data: {
-            story_prompt: storyPrompt
+            story_prompt: storyPrompt,
+            aspect_ratio: aspectRatio
         },
         success: function(response) {
             if (response.status === 'started') {

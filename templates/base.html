@@ -122,6 +122,27 @@
         .video-player {
             border-radius: 8px;
             overflow: hidden;
+            position: relative;
+        }
+
+        .video-player video {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: contain;
+        }
+
+        /* Responsive video sizing for different aspect ratios */
+        @media (max-width: 768px) {
+            .video-player video {
+                max-height: 250px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .video-player video {
+                max-height: 350px;
+            }
         }
 
         .navbar {
@@ -168,6 +189,28 @@
             border-radius: 6px;
             font-size: 0.875rem;
             font-weight: 500;
+        }
+
+        /* Compact video card styling */
+        .video-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .video-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .video-card .card-header {
+            padding: 0.75rem 1rem;
+        }
+
+        .video-card .card-body {
+            padding: 0.75rem 1rem;
+        }
+
+        .video-card .card-footer {
+            padding: 0.75rem 1rem;
         }
     </style>
 </head>

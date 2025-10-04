@@ -425,7 +425,7 @@ def get_next_video_folder():
     
     return folder_path
 
-def generate_all_images_with_character_consistency(script_verses, style_images=None, video_folder=None):
+def generate_all_images_with_character_consistency(script_verses, style_images=None, video_folder=None, aspect_ratio="16:9"):
     """
     Generate images for all script verses, maintaining character consistency.
     For the first image, use style_images if available.
@@ -476,7 +476,7 @@ def generate_all_images_with_character_consistency(script_verses, style_images=N
             print(f"Using {len(generated_images)} previously generated images for character consistency (no initial style images)")
         
         # Generate the image
-        image_url = generate_image_based_on_style_image(current_style_images, verse)
+        image_url = generate_image_based_on_style_image(current_style_images, verse, aspect_ratio)
         
         if image_url:
             # Download and save the image
@@ -792,13 +792,14 @@ def on_queue_update(update):
         for log in update.logs:
             print(log["message"])
 
-def generate_image_based_on_style_image(style_images, prompt):
+def generate_image_based_on_style_image(style_images, prompt, aspect_ratio="16:9"):
     """
     Generate an image using nano banana API with optional style images.
     
     Args:
         style_images (list or None): List of style image file paths, or None if no style images
         prompt (str): Text prompt for image generation
+        aspect_ratio (str): Aspect ratio for the generated image (e.g., "16:9", "9:16")
     
     Returns:
         str: URL of the generated image, or None if generation failed
@@ -828,7 +829,10 @@ def generate_image_based_on_style_image(style_images, prompt):
                 print("No style images were successfully uploaded, falling back to text-only generation")
                 # Fall back to text-only generation
                 endpoint = "fal-ai/nano-banana"
-                arguments = {"prompt": prompt}
+                arguments = {
+                    "prompt": prompt,
+                    "aspect_ratio": aspect_ratio
+                }
             else:
                 # Use nano-banana/edit with style images and styling prompt
                 endpoint = "fal-ai/nano-banana/edit"
@@ -836,13 +840,17 @@ def generate_image_based_on_style_image(style_images, prompt):
                 styled_prompt = f"{prompt}, use the reference images only for visual style inspiration (colors, lighting, art style, mood) but do not copy any characters or objects from them, create completely new content"
                 arguments = {
                     "prompt": styled_prompt,
-                    "image_urls": image_urls
+                    "image_urls": image_urls,
+                    "aspect_ratio": aspect_ratio
                 }
         else:
             # Generate without style images using nano-banana
             print("Generating image without style reference")
             endpoint = "fal-ai/nano-banana"
-            arguments = {"prompt": prompt}
+            arguments = {
+                "prompt": prompt,
+                "aspect_ratio": aspect_ratio
+            }
         
         # Submit the request
         print(f"Submitting request to {endpoint}...")

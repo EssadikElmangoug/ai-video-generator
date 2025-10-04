@@ -3,3 +3,4 @@ fal-client
 openai
 requests
 moviepy
+flask

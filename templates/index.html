@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Video - Shorts AI Agent{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 mb-4">
+            <i class="fas fa-magic me-3"></i>AI Video Generator
+        </h1>
+        <p class="lead">Create stunning short videos with AI-generated scripts, images, and audio</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-play-circle me-2"></i>Generate New Video
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form id="videoForm">
+                        <div class="mb-4">
+                            <label for="story_prompt" class="form-label">
+                                <i class="fas fa-lightbulb me-2"></i>Story Prompt
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="story_prompt" 
+                                name="story_prompt" 
+                                rows="4" 
+                                placeholder="Describe your video story... (e.g., 'a mysterious forest adventure' or 'a horror story about a haunted house')"
+                                required
+                            ></textarea>
+                            <div class="form-text">
+                                Be creative! The AI will generate a complete script, images, and audio based on your prompt.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
+                                <i class="fas fa-rocket me-2"></i>Generate Video
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="card mt-4" id="statusCard" style="display: none;">
+                <div class="card-header status-card">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog fa-spin me-2"></i>Generation Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span id="currentStep">Preparing...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 id="progressBar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div id="statusMessage" class="text-muted"></div>
+                </div>
+            </div>
+
+            <!-- Result Card -->
+            <div class="card mt-4" id="resultCard" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Video Generated Successfully!
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-video fa-3x text-success mb-3"></i>
+                        <p class="lead">Your video is ready for download!</p>
+                    </div>
+                    <a href="#" id="downloadBtn" class="btn btn-success btn-lg">
+                        <i class="fas fa-download me-2"></i>Download Video
+                    </a>
+                </div>
+            </div>
+
+            <!-- Error Card -->
+            <div class="card mt-4" id="errorCard" style="display: none;">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Generation Failed
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p id="errorMessage" class="text-danger"></p>
+                    <button class="btn btn-outline-danger" onclick="resetForm()">
+                        <i class="fas fa-redo me-2"></i>Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-pen-fancy fa-3x text-primary mb-3"></i>
+                    <h5>AI Script Generation</h5>
+                    <p class="text-muted">Generate compelling video scripts with detailed scene descriptions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-image fa-3x text-success mb-3"></i>
+                    <h5>Character-Consistent Images</h5>
+                    <p class="text-muted">Create images that maintain character consistency throughout your video</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-volume-up fa-3x text-warning mb-3"></i>
+                    <h5>High-Quality Audio</h5>
+                    <p class="text-muted">Generate natural-sounding voiceovers for your video content</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let statusInterval;
+
+$(document).ready(function() {
+    $('#videoForm').on('submit', function(e) {
+        e.preventDefault();
+        startGeneration();
+    });
+});
+
+function startGeneration() {
+    const storyPrompt = $('#story_prompt').val().trim();
+    
+    if (!storyPrompt) {
+        alert('Please enter a story prompt');
+        return;
+    }
+    
+    // Show status card and hide others
+    $('#statusCard').show();
+    $('#resultCard').hide();
+    $('#errorCard').hide();
+    $('#generateBtn').prop('disabled', true);
+    
+    // Start generation
+    $.ajax({
+        url: '/generate',
+        method: 'POST',
+        data: {
+            story_prompt: storyPrompt
+        },
+        success: function(response) {
+            if (response.status === 'started') {
+                startStatusPolling();
+            }
+        },
+        error: function(xhr) {
+            const error = xhr.responseJSON?.error || 'Failed to start generation';
+            showError(error);
+        }
+    });
+}
+
+function startStatusPolling() {
+    statusInterval = setInterval(function() {
+        $.get('/status', function(data) {
+            updateStatus(data);
+            
+            if (!data.is_running) {
+                clearInterval(statusInterval);
+                $('#generateBtn').prop('disabled', false);
+                
+                if (data.error) {
+                    showError(data.error);
+                } else if (data.progress === 100) {
+                    showSuccess(data.video_folder);
+                }
+            }
+        });
+    }, 2000);
+}
+
+function updateStatus(data) {
+    $('#currentStep').text(data.current_step || 'Processing...');
+    $('#progressPercent').text(data.progress + '%');
+    $('#progressBar').css('width', data.progress + '%');
+    
+    if (data.error) {
+        $('#statusMessage').html('<i class="fas fa-exclamation-triangle text-danger me-2"></i>' + data.error);
+    } else {
+        $('#statusMessage').html('<i class="fas fa-info-circle text-info me-2"></i>Generation in progress...');
+    }
+}
+
+function showSuccess(videoFolder) {
+    $('#statusCard').hide();
+    $('#resultCard').show();
+    $('#downloadBtn').attr('href', '/download/' + videoFolder + '/final_video.mp4');
+}
+
+function showError(error) {
+    $('#statusCard').hide();
+    $('#errorCard').show();
+    $('#errorMessage').text(error);
+}
+
+function resetForm() {
+    $('#statusCard').hide();
+    $('#resultCard').hide();
+    $('#errorCard').hide();
+    $('#generateBtn').prop('disabled', false);
+    $('#story_prompt').val('');
+}
+</script>
+{% endblock %}
